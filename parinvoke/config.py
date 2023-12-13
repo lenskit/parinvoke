@@ -63,6 +63,7 @@ class ParallelConfig:
         level: int = 0,
     ):
         self.env_prefixes = ["PARINVOKE"]
+        self.aliases = {}
 
         if isinstance(nprocs, list):
             self.proc_counts = nprocs
@@ -157,7 +158,7 @@ class ParallelConfig:
             int: The number of processes desired.
         """
 
-        self._configure_count
+        self._configure_count()
         assert self.proc_counts is not None
         if level is None:
             level = self.level
