@@ -32,6 +32,7 @@ dev = [
   "build",
   "twine",
   "ruff",
+  "mypy ~=1.5",
   "copier",
   "sphinx-autobuild",
 ]
