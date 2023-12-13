@@ -1,3 +1,4 @@
+Copyright (c) 2020–2023 Boise State University
 Copyright (c) 2023 Michael Ekstrand
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
