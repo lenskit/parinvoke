@@ -3,5 +3,8 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,
   },
-  "[toml]": {"editor.formatOnSave": true}
+  "[toml]": {
+    "editor.formatOnSave": true
+  },
+  "mypy.enabled": true
 }
