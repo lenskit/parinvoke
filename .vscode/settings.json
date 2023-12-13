@@ -1,11 +1,14 @@
 {
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {"source.organizeImports": true},
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
     "editor.formatOnSave": true,
   },
   "[toml]": {
     "editor.formatOnSave": true
   },
-  "mypy.enabled": true
+  "mypy.enabled": true,
+  "python.analysis.typeCheckingMode": "strict"
 }
