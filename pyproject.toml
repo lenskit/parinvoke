@@ -32,7 +32,7 @@ dev = [
   "build",
   "twine",
   "ruff",
-  "mypy ~=1.5",
+  "pyright",
   "copier",
   "sphinx-autobuild",
 ]
