@@ -63,6 +63,7 @@ channels = ["conda-forge"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+select = ["E", "F", "I"]
 exclude = [
   ".git",
   "__pycache__",
