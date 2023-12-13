@@ -6,6 +6,7 @@ import logging
 import multiprocessing as mp
 import os
 import warnings
+from collections.abc import Generator
 from typing import Callable, NamedTuple, Optional, TypeVar, overload
 
 _log = logging.getLogger(__name__)
@@ -88,14 +89,14 @@ class ParallelConfig:
         self.aliases[name].append(VarName(alias, deprecated))
 
     @overload
-    def _get_env_var(self, name) -> tuple[str, str | None]:
+    def _get_env_var(self, name: str) -> tuple[str, str] | None:
         ...
 
     @overload
-    def _get_env_var(self, name: str, cast: Callable[[str], T]) -> tuple[str, T | None]:
+    def _get_env_var(self, name: str, cast: Callable[[str], T]) -> tuple[str, T] | None:
         ...
 
-    def _get_env_var(self, name: str, cast=None):
+    def _get_env_var(self, name: str, cast: Callable[[str], object] | None = None):
         """
         Get an environment variable.
         """
@@ -112,7 +113,7 @@ class ParallelConfig:
                 else:
                     return vn.name, val
 
-    def _var_names(self, name):
+    def _var_names(self, name: str) -> Generator[VarName, None, None]:
         yield from self.aliases.get(name, [])
         for pfx in self.env_prefixes:
             yield VarName(f"{pfx}_{name}")
@@ -124,12 +125,12 @@ class ParallelConfig:
         if self.proc_counts is not None:
             return
 
-        npv = self._get_env_var("NUM_PROCS", None)
+        npv = self._get_env_var("NUM_PROCS")
         if npv is not None:
             vn, nprocs = npv
             _log.debug("found process count config in %s=%s", vn, nprocs)
             self.proc_counts = [int(s) for s in nprocs.split(",")]
-        elif self.core_div is not None:
+        else:
             nprocs = max(mp.cpu_count() // self.core_div, 1)
             if self.max_default is not None:
                 nprocs = min(nprocs, self.max_default)
