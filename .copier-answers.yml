@@ -1,0 +1,9 @@
+# Changes here will be overwritten by Copier
+_commit: ccc299c
+_src_path: https://github.com/lenskit/lk-project-template.git
+package_name: parinvoke
+project_descr: Invoke operations on large models in parallel.
+project_name: parinvoke
+project_title: parinvoke
+require_lint: true
+start_year: 2023

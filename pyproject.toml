@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parinvoke"
+description = "Invoke operations on large models in parallel."
+authors = [
+  {name="Michael Ekstrand", email="mdekstrand@drexel.edu"}
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent",
+]
+requires-python = ">= 3.10"
+readme = "README.md"
+license = { file = "LICENSE.md" }
+dynamic = ["version"]
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+  "setuptools>=64",
+  "setuptools_scm>=8",
+  "build",
+  "twine",
+  "ruff",
+  "copier",
+  "sphinx-autobuild",
+]
+test = [
+  "pytest >=7"
+]
+doc = [
+  "sphinx >=4.2",
+  "sphinxext-opengraph >= 0.5",
+  "furo",
+]
+
+[project.urls]
+Homepage = "https://parinvoke.lenksit.org"
+GitHub = "https://github.com/lenskit/parinvoke"
+
+# configure build tools
+[tool.setuptools]
+packages = ["parinvoke"]
+
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+
+# settings for generating conda environments for dev & CI, when needed
+[tool.pyproject2conda]
+channels = ["conda-forge"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+  ".git",
+  "__pycache__",
+  "docs/conf.py",
+  "build",
+  "dist",
+]
