@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "parinvoke"
 description = "Invoke operations on large models in parallel."
 authors = [
-  {name="Michael Ekstrand", email="mdekstrand@drexel.edu"}
+  { name = "Michael Ekstrand", email = "mdekstrand@drexel.edu" },
 ]
 classifiers = [
   "License :: OSI Approved :: MIT License",
@@ -21,7 +21,8 @@ readme = "README.md"
 license = { file = "LICENSE.md" }
 dynamic = ["version"]
 dependencies = [
-  "binpickle ~=0.4.0a1"
+  "binpickle ~=0.4.0a1",
+  "pyzmq >=24",
 ]
 
 [project.optional-dependencies]
@@ -35,7 +36,7 @@ dev = [
   "sphinx-autobuild",
 ]
 test = [
-  "pytest >=7"
+  "pytest >=7",
 ]
 doc = [
   "sphinx >=4.2",
