@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import logging
 import multiprocessing.shared_memory as shm
 import pickle
 import sys
+from pathlib import Path
 from typing import TypeVar
 
 from . import PersistedModel, sharing_mode
