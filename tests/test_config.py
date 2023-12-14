@@ -1,29 +1,7 @@
 import multiprocessing as mp
-import os
-from contextlib import contextmanager
 
 from parinvoke.config import ParallelConfig
-
-
-@contextmanager
-def set_env_var(var, val):
-    "Set an environment variable & restore it."
-    is_set = var in os.environ
-    old_val = None
-    if is_set:
-        old_val = os.environ[var]
-    try:
-        if val is None:
-            if is_set:
-                del os.environ[var]
-        else:
-            os.environ[var] = val
-        yield
-    finally:
-        if is_set:
-            os.environ[var] = old_val
-        elif val is not None:
-            del os.environ[var]
+from parinvoke.util import set_env_var
 
 
 def test_proc_count_default():

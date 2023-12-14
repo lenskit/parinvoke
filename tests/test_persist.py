@@ -1,23 +1,26 @@
 import os
-import pickle
 
 import numpy as np
+
+from parinvoke import persist
+from parinvoke.util import set_env_var
+
 from pytest import mark
 
 
 def test_sharing_mode():
     "Ensure sharing mode decorator turns on sharing"
-    assert not lks.in_share_context()
+    assert not persist.in_share_context()
 
-    with lks.sharing_mode():
-        assert lks.in_share_context()
+    with persist.sharing_mode():
+        assert persist.in_share_context()
 
-    assert not lks.in_share_context()
+    assert not persist.in_share_context()
 
 
 def test_persist_bpk():
     matrix = np.random.randn(1000, 100)
-    share = lks.persist_binpickle(matrix)
+    share = persist.persist_binpickle(matrix)
     try:
         assert share.path.exists()
         m2 = share.get()
@@ -28,10 +31,10 @@ def test_persist_bpk():
         share.close()
 
 
-@mark.skipif(not lks.SHM_AVAILABLE, reason="shared_memory not available")
+@mark.skipif(not persist.SHM_AVAILABLE, reason="shared_memory not available")
 def test_persist_shm():
     matrix = np.random.randn(1000, 100)
-    share = lks.persist_shm(matrix)
+    share = persist.persist_shm(matrix)
     try:
         m2 = share.get()
         assert m2 is not matrix
@@ -44,7 +47,7 @@ def test_persist_shm():
 def test_persist():
     "Test default persistence"
     matrix = np.random.randn(1000, 100)
-    share = lks.persist(matrix)
+    share = persist.persist(matrix)
     try:
         m2 = share.get()
         assert m2 is not matrix
@@ -57,9 +60,9 @@ def test_persist():
 def test_persist_dir(tmp_path):
     "Test persistence with a configured directory"
     matrix = np.random.randn(1000, 100)
-    with lktu.set_env_var("LK_TEMP_DIR", os.fspath(tmp_path)):
-        share = lks.persist(matrix)
-        assert isinstance(share, lks.BPKPersisted)
+    with set_env_var("LK_TEMP_DIR", os.fspath(tmp_path)):
+        share = persist.persist(matrix)
+        assert isinstance(share, persist.BPKPersisted)
 
     try:
         m2 = share.get()
@@ -74,8 +77,8 @@ def test_persist_method():
     "Test persistence with a specified method"
     matrix = np.random.randn(1000, 100)
 
-    share = lks.persist(matrix, method="binpickle")
-    assert isinstance(share, lks.BPKPersisted)
+    share = persist.persist(matrix, method="binpickle")
+    assert isinstance(share, persist.BPKPersisted)
 
     try:
         m2 = share.get()
@@ -84,24 +87,3 @@ def test_persist_method():
         del m2
     finally:
         share.close()
-
-
-def test_store_als():
-    algo = BiasedMF(10)
-    algo.fit(lktu.ml_test.ratings)
-
-    shared = lks.persist(algo)
-    k2 = pickle.loads(pickle.dumps(shared))
-    try:
-        a2 = k2.get()
-
-        assert a2 is not algo
-        assert a2.item_features_ is not algo.item_features_
-        assert np.all(a2.item_features_ == algo.item_features_)
-        assert a2.user_features_ is not algo.user_features_
-        assert np.all(a2.user_features_ == algo.user_features_)
-        del a2
-        k2.close()
-        del k2
-    finally:
-        shared.close()

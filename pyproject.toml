@@ -39,6 +39,7 @@ dev = [
 ]
 test = [
   "pytest >=7",
+  "numpy >= 1.21",
 ]
 doc = [
   "sphinx >=4.2",
