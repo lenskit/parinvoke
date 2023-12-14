@@ -21,7 +21,7 @@ readme = "README.md"
 license = { file = "LICENSE.md" }
 dynamic = ["version"]
 dependencies = [
-  "binpickle ~=0.4.0a1",
+  "binpickle ~=0.4.0a1", # p2c: -p
   "pyzmq >=24",
 ]
 
