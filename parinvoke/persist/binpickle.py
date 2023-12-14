@@ -5,7 +5,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import TypeVar
+from typing import Optional, TypeVar, cast
 
 import binpickle
 
@@ -45,6 +45,10 @@ def persist_binpickle[T](
 
 
 class BPKPersisted[T](PersistedModel[T]):
+    path: Path
+    _bpk_file: Optional[binpickle.BinPickleFile]
+    _model: Optional[T]
+
     def __init__(self, path: Path):
         self.path = path
         self.is_owner = True
@@ -55,7 +59,8 @@ class BPKPersisted[T](PersistedModel[T]):
         if self._bpk_file is None:
             _log.debug("loading %s", self.path)
             self._bpk_file = binpickle.BinPickleFile(self.path, direct=True)
-            self._model = self._bpk_file.load()
+            self._model = cast(T, self._bpk_file.load())
+        assert self._model is not None
         return self._model
 
     def close(self, unlink: bool = True):

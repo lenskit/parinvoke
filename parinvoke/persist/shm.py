@@ -4,24 +4,28 @@ import logging
 import multiprocessing.shared_memory as shm
 import pickle
 import sys
-from pathlib import Path
-from typing import TypeVar
+from typing import NamedTuple, Optional, TypeVar
 
 from . import PersistedModel, sharing_mode
 
+# we have encountered a number of bugs on Windows
 SHM_AVAILABLE = sys.platform != "win32"
 
 _log = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def persist_shm[T](model: T, dir: str | Path | None = None) -> SHMPersisted[T]:
+class SHMBlock(NamedTuple):
+    start: int
+    end: int
+
+
+def persist_shm[T](model: T) -> SHMPersisted[T]:
     """
-    Persist a model using binpickle.
+    Persist a model using :mod:`multiprocessing.shared_memory`.
 
     Args:
         model: The model to persist.
-        dir: The temporary directory for persisting the model object.
 
     Returns:
         PersistedModel: The persisted object.
@@ -53,7 +57,7 @@ def persist_shm[T](model: T, dir: str | Path | None = None) -> SHMPersisted[T]:
             bend = cur_offset + blen
             _log.debug("saving %d bytes in buffer %d/%d", blen, i + 1, len(buffers))
             memory.buf[cur_offset:bend] = ba
-            blocks.append((cur_offset, bend))
+            blocks.append(SHMBlock(cur_offset, bend))
             cur_offset = bend
     else:
         memory = None
@@ -64,10 +68,13 @@ def persist_shm[T](model: T, dir: str | Path | None = None) -> SHMPersisted[T]:
 
 class SHMPersisted[T](PersistedModel[T]):
     buffers = []
-    _model = None
-    memory = None
+    pickle_data: bytes
+    blocks: list[SHMBlock]
+    memory: Optional[shm.SharedMemory]
+    shm_name: str | None
+    _model: Optional[T] = None
 
-    def __init__(self, data, memory, blocks):
+    def __init__(self, data: bytes, memory: shm.SharedMemory | None, blocks: list[SHMBlock]):
         self.pickle_data = data
         self.blocks = blocks
         self.memory = memory
@@ -80,6 +87,7 @@ class SHMPersisted[T](PersistedModel[T]):
             shm = self._open()
             buffers = []
             for bs, be in self.blocks:
+                assert shm is not None, "persisted object with blocks has no shared memory"
                 buffers.append(shm.buf[bs:be])
 
             self._model = pickle.loads(self.pickle_data, buffers=buffers)
@@ -98,7 +106,7 @@ class SHMPersisted[T](PersistedModel[T]):
                 self.is_owner = False
             self.memory = None
 
-    def _open(self):
+    def _open(self) -> shm.SharedMemory | None:
         if self.shm_name and not self.memory:
             self.memory = shm.SharedMemory(name=self.shm_name)
         return self.memory
