@@ -34,6 +34,7 @@ dev = [
   "ruff",
   "pyright",
   "copier",
+  "ipython",
   "sphinx-autobuild",
 ]
 test = [
