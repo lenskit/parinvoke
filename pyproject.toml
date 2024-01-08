@@ -22,6 +22,7 @@ license = { file = "LICENSE.md" }
 dynamic = ["version"]
 dependencies = [
   "binpickle ~=0.4.0a1", # p2c: -p
+  "seedbank ~=0.2.0a1",  # p2c: -p
   "pyzmq >=24",
 ]
 
@@ -40,6 +41,7 @@ dev = [
 ]
 test = [
   "pytest >=7",
+  "coverage >=5",
   "numpy >= 1.21",
 ]
 doc = [
@@ -62,6 +64,16 @@ version_scheme = "release-branch-semver"
 # settings for generating conda environments for dev & CI, when needed
 [tool.pyproject2conda]
 channels = ["conda-forge"]
+python = ["3.10", "3.11", "3.12"]
+default_envs = ["test", "doc"]
+template_python = "envs/parinvoke-py{py_version}-{env}"
+template = "envs/{env}"
+
+[tool.pyproject2conda.envs.dev]
+extras = ["dev", "test", "doc"]
+
+[tool.pyproject2conda.envs.ci]
+extras = ["test"]
 
 [tool.ruff]
 line-length = 100
