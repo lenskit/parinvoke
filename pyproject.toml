@@ -35,6 +35,7 @@ dev = [
   "pyright",
   "copier",
   "ipython",
+  "pyproject2conda",
   "sphinx-autobuild",
 ]
 test = [
@@ -79,17 +80,19 @@ section-order = [
   "future",
   "standard-library",
   "third-party",
+  "testing",
   "first-party",
   "local-folder",
 ]
 
 [tool.ruff.lint.isort.sections]
-test = ["pytest", "hypothesis"]
+testing = ["pytest", "hypothesis"]
 
 [tool.mypy]
 exclude = "^docs/"
 
 [tool.pyright]
+typeCheckingMode = "strict"
 exclude = [
   "docs/*",
 ]
