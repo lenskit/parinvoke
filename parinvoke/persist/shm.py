@@ -20,7 +20,7 @@ class SHMBlock(NamedTuple):
     end: int
 
 
-def persist_shm[T](model: T) -> SHMPersisted[T]:
+def persist_shm(model: T) -> SHMPersisted[T]:
     """
     Persist a model using :mod:`multiprocessing.shared_memory`.
 
@@ -66,7 +66,7 @@ def persist_shm[T](model: T) -> SHMPersisted[T]:
     return SHMPersisted[T](data, memory, blocks)
 
 
-class SHMPersisted[T](PersistedModel[T]):
+class SHMPersisted(PersistedModel[T]):
     buffers = []
     pickle_data: bytes
     blocks: list[SHMBlock]

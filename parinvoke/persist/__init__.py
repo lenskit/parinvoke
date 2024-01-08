@@ -10,7 +10,7 @@ import threading
 import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Callable, Literal, TypeVar
+from typing import Callable, Generic, Literal, TypeVar
 
 _log = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def in_share_context():
     return _save_mode() == "share"
 
 
-class PersistedModel[T](ABC):
+class PersistedModel(ABC, Generic[T]):
     """
     A persisted model for inter-process model sharing.
 
@@ -97,9 +97,9 @@ class PersistedModel[T](ABC):
         return self
 
 
-def persist[T](
-    model: T, *, method: str | Callable[[T], PersistedModel[T]] | None = None
-) -> PersistedModel[T]:
+def persist(
+    model: T, *, method: str | Callable[[T], PersistedModel] | None = None
+) -> PersistedModel:
     """
     Persist a model for cross-process sharing.
 

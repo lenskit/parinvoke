@@ -15,7 +15,7 @@ _log = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def persist_binpickle[T](
+def persist_binpickle(
     model: T, dir: str | Path | None = None, file: str | Path | None = None
 ) -> BPKPersisted[T]:
     """
@@ -44,7 +44,7 @@ def persist_binpickle[T](
     return BPKPersisted[T](path)
 
 
-class BPKPersisted[T](PersistedModel[T]):
+class BPKPersisted(PersistedModel[T]):
     path: Path
     _bpk_file: Optional[binpickle.BinPickleFile]
     _model: Optional[T]
