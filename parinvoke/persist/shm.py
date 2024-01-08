@@ -4,7 +4,7 @@ import logging
 import multiprocessing.shared_memory as shm
 import pickle
 import sys
-from typing import NamedTuple, Optional, TypeVar
+from typing import Any, NamedTuple, Optional, TypeVar
 
 from . import PersistedModel, sharing_mode
 
@@ -31,7 +31,7 @@ def persist_shm(model: T) -> SHMPersisted[T]:
         PersistedModel: The persisted object.
     """
 
-    buffers = []
+    buffers: list[pickle.PickleBuffer] = []
 
     with sharing_mode():
         data = pickle.dumps(model, protocol=5, buffer_callback=buffers.append)
@@ -50,7 +50,7 @@ def persist_shm(model: T) -> SHMPersisted[T]:
         _log.debug("preparing to share %d buffers", len(buffers))
         memory = shm.SharedMemory(create=True, size=total_size)
         cur_offset = 0
-        blocks = []
+        blocks: list[SHMBlock] = []
         for i, buf in enumerate(buffers):
             ba = buf.raw()
             blen = ba.nbytes
@@ -67,7 +67,6 @@ def persist_shm(model: T) -> SHMPersisted[T]:
 
 
 class SHMPersisted(PersistedModel[T]):
-    buffers = []
     pickle_data: bytes
     blocks: list[SHMBlock]
     memory: Optional[shm.SharedMemory]
@@ -85,7 +84,7 @@ class SHMPersisted(PersistedModel[T]):
         if self._model is None:
             _log.debug("loading model from shared memory")
             shm = self._open()
-            buffers = []
+            buffers: list[memoryview] = []
             for bs, be in self.blocks:
                 assert shm is not None, "persisted object with blocks has no shared memory"
                 buffers.append(shm.buf[bs:be])
@@ -94,11 +93,10 @@ class SHMPersisted(PersistedModel[T]):
 
         return self._model
 
-    def close(self, unlink=True):
+    def close(self, unlink: bool = True):
         self._model = None
 
         _log.debug("releasing SHM buffers")
-        self.buffers = None
         if self.memory is not None:
             self.memory.close()
             if unlink and self.is_owner and self.is_owner != "transfer":
@@ -119,7 +117,7 @@ class SHMPersisted(PersistedModel[T]):
             "is_owner": True if self.is_owner == "transfer" else False,
         }
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]):
         self.__dict__.update(state)
         if self.is_owner:
             _log.debug("opening shared buffers after ownership transfer")
