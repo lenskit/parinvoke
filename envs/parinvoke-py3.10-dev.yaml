@@ -27,6 +27,7 @@ dependencies:
   - sphinx-autobuild
   - sphinx>=4.2
   - sphinxext-opengraph>=0.5
+  - threadpoolctl>=3.0
   - twine
   - pip
   - pip:

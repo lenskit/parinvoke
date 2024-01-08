@@ -23,6 +23,7 @@ dynamic = ["version"]
 dependencies = [
   "binpickle ~=0.4.0a1", # p2c: -p
   "seedbank ~=0.2.0a1",  # p2c: -p
+  "threadpoolctl >=3.0",
   "pyzmq >=24",
 ]
 
@@ -55,8 +56,8 @@ Homepage = "https://parinvoke.lenksit.org"
 GitHub = "https://github.com/lenskit/parinvoke"
 
 # configure build tools
-[tool.setuptools]
-packages = ["parinvoke"]
+[tool.setuptools.packages.find]
+include = ["parinvoke*"]
 
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
