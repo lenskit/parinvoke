@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -57,12 +58,12 @@ def test_persist():
         share.close()
 
 
-def test_persist_dir(tmp_path):
+def test_persist_dir(tmp_path: Path):
     "Test persistence with a configured directory"
     matrix = np.random.randn(1000, 100)
     with set_env_var("LK_TEMP_DIR", os.fspath(tmp_path)):
         share = persist.persist(matrix)
-        assert isinstance(share, persist.BPKPersisted)
+        assert isinstance(share, persist.binpickle.BPKPersisted)
 
     try:
         m2 = share.get()
@@ -78,7 +79,7 @@ def test_persist_method():
     matrix = np.random.randn(1000, 100)
 
     share = persist.persist(matrix, method="binpickle")
-    assert isinstance(share, persist.BPKPersisted)
+    assert isinstance(share, persist.binpickle.BPKPersisted)
 
     try:
         m2 = share.get()

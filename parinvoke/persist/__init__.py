@@ -98,8 +98,8 @@ class PersistedModel(ABC, Generic[T]):
 
 
 def persist(
-    model: T, *, method: str | Callable[[T], PersistedModel] | None = None
-) -> PersistedModel:
+    model: T, *, method: str | Callable[[T], PersistedModel[T]] | None = None
+) -> PersistedModel[T]:
     """
     Persist a model for cross-process sharing.
 
@@ -145,5 +145,5 @@ def persist(
     return persist(model)
 
 
-from .binpickle import BPKPersisted, persist_binpickle  # noqa: E402,F401
-from .shm import SHM_AVAILABLE, SHMPersisted, persist_shm  # noqa: E402,F401
+from .binpickle import persist_binpickle  # noqa: E402,F401
+from .shm import SHM_AVAILABLE, persist_shm  # noqa: E402,F401
