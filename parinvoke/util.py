@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def set_env_var(var, val):
+def set_env_var(var: str, val: str | None):
     """
     Context manager to set an environment variable and restore it.
     Primarily used for testing.

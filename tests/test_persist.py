@@ -2,10 +2,10 @@ import os
 
 import numpy as np
 
+from pytest import mark
+
 from parinvoke import persist
 from parinvoke.util import set_env_var
-
-from pytest import mark
 
 
 def test_sharing_mode():
