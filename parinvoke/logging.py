@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import logging
-import multiprocessing as mp
 from logging.handlers import QueueListener
 from multiprocessing.context import BaseContext
+from multiprocessing.queues import Queue
 
-_log_queue: mp.Queue[logging.LogRecord] | None = None
+_log_queue: Queue[logging.LogRecord] | None = None
 _log_listener = None
 
 
@@ -21,7 +23,7 @@ class InjectHandler(logging.Handler):
             return False
 
 
-def log_queue(ctx: BaseContext) -> mp.Queue[logging.LogRecord]:
+def log_queue(ctx: BaseContext) -> Queue[logging.LogRecord]:
     """
     Get the log queue for child process logging.
     """

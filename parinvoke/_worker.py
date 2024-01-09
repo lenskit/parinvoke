@@ -1,6 +1,7 @@
 """
 Code to support worker processes.
 """
+from __future__ import annotations
 
 import faulthandler
 import logging
