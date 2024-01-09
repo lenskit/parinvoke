@@ -69,8 +69,8 @@ def persist_shm(model: T) -> SHMPersisted[T]:
 class SHMPersisted(PersistedModel[T]):
     pickle_data: bytes
     blocks: list[SHMBlock]
-    memory: Optional[shm.SharedMemory]
-    shm_name: str | None
+    memory: Optional[shm.SharedMemory] = None
+    shm_name: str | None = None
     _model: Optional[T] = None
 
     def __init__(self, data: bytes, memory: shm.SharedMemory | None, blocks: list[SHMBlock]):

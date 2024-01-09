@@ -15,7 +15,7 @@ import seedbank
 from numpy.random import SeedSequence
 from threadpoolctl import threadpool_limits
 
-from parinvoke.persist import PersistedModel
+from parinvoke.sharing import PersistedModel
 
 T = TypeVar("T")
 _log = logging.getLogger(__name__)

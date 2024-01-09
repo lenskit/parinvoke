@@ -11,7 +11,7 @@ from pytest import raises
 
 from parinvoke import is_mp_worker, is_worker
 from parinvoke.isolate import run_sp
-from parinvoke.persist import SHM_AVAILABLE, persist
+from parinvoke.sharing import SHM_AVAILABLE, persist
 
 _log = logging.getLogger(__name__)
 
