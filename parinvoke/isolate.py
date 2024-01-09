@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import multiprocessing as mp
+import pickle
 from typing import Any, Callable, ParamSpec, TypeVar
 
 import seedbank
@@ -18,12 +19,14 @@ _log = logging.getLogger(__name__)
 def _sp_worker(
     log_queue: mp.Queue[logging.LogRecord],
     seed: SeedSequence,
-    res_queue: mp.Queue[tuple[bool, T | Exception]],
-    func: Callable[..., T],
+    res_queue: mp.Queue[tuple[bool, Any | Exception]],
+    func_pkl: bytes,
     args: list[Any],
     kwargs: dict[str, Any],
 ):
     initialize_worker(log_queue, seed)
+    _log.debug("unpickling worker function")
+    func = pickle.loads(func_pkl)
     _log.debug("running %s in worker", func)
     try:
         res = func(*args, **kwargs)
@@ -43,7 +46,9 @@ def run_sp(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
     ctx = mp.get_context("spawn")
     rq = ctx.SimpleQueue()
     seed = seedbank.derive_seed()
-    worker_args = (log_queue(ctx), seed, rq, func, args, kwargs)
+    # we pre-pickle the function to defer imports
+    func_pkl = pickle.dumps(func, pickle.HIGHEST_PROTOCOL)
+    worker_args = (log_queue(ctx), seed, rq, func_pkl, args, kwargs)
     _log.debug("spawning subprocess to run %s", func)
     proc = ctx.Process(target=_sp_worker, args=worker_args)
     proc.start()
