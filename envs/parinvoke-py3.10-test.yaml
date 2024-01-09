@@ -14,9 +14,8 @@ dependencies:
   - coverage>=5
   - numpy>=1.21
   - pytest>=7
-  - pyzmq>=24
   - threadpoolctl>=3.0
   - pip
   - pip:
-      - binpickle~=0.4.0a1
+      - binpickle~=0.4.0a4
       - seedbank~=0.2.0a1

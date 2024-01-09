@@ -12,11 +12,10 @@ channels:
 dependencies:
   - python=3.11
   - furo
-  - pyzmq>=24
   - sphinx>=4.2
   - sphinxext-opengraph>=0.5
   - threadpoolctl>=3.0
   - pip
   - pip:
-      - binpickle~=0.4.0a1
+      - binpickle~=0.4.0a4
       - seedbank~=0.2.0a1

@@ -21,10 +21,10 @@ readme = "README.md"
 license = { file = "LICENSE.md" }
 dynamic = ["version"]
 dependencies = [
-  "binpickle ~=0.4.0a1", # p2c: -p
-  "seedbank ~=0.2.0a4",  # p2c: -p
+  "binpickle ~=0.4.0a4", # p2c: -p
+  "seedbank ~=0.2.0a1",  # p2c: -p
   "threadpoolctl >=3.0",
-  "pyzmq >=24",
+  # "pyzmq >=24",
 ]
 
 [project.optional-dependencies]
