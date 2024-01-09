@@ -105,6 +105,7 @@ testing = ["pytest", "hypothesis"]
 exclude = "^docs/"
 
 [tool.pyright]
+pythonVersion = "3.10"
 typeCheckingMode = "strict"
 exclude = [
   "docs/*",
