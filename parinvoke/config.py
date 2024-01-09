@@ -80,6 +80,10 @@ class ParallelConfig:
         self.core_div = core_div
         self.level = level
 
+    @staticmethod
+    def default():
+        return ParallelConfig()
+
     def add_alias(self, alias: str, name: str, *, deprecated: bool = False):
         """
         Add an alias for an environment variable.
