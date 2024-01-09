@@ -15,6 +15,13 @@ from parinvoke.persist import SHM_AVAILABLE, persist
 
 _log = logging.getLogger(__name__)
 
+_static_isw = is_worker()
+_static_is_mpw = is_mp_worker()
+
+
+def _static_worker_status(_msg):
+    return os.getpid(), _static_isw, _static_is_mpw
+
 
 def _worker_status(blob, *args):
     _log.info("in worker %s", mp.current_process().name)
@@ -68,6 +75,13 @@ def test_run_sp_persist(method):
 
 def test_sp_is_worker():
     pid, w, mpw = run_sp(_worker_status, "fishtank")
+    assert pid != os.getpid()
+    assert w
+    assert not mpw
+
+
+def test_sp_is_worker_static():
+    pid, w, mpw = run_sp(_static_worker_status, "fishtank")
     assert pid != os.getpid()
     assert w
     assert not mpw
