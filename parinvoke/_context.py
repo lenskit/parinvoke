@@ -8,11 +8,9 @@
 from __future__ import annotations
 
 import pickle
-from collections.abc import Callable, Iterable, Mapping
 from multiprocessing import SimpleQueue
 from multiprocessing.connection import Connection
-from multiprocessing.context import SpawnContext, SpawnProcess
-from typing import Any
+from multiprocessing.context import SpawnContext
 
 
 class PIContext(SpawnContext):
