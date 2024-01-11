@@ -57,7 +57,7 @@ jobs:
       - name: Run tests
         run: |
           if [ "$METHOD" = conda ]; then
-            eval $(micromamba shell activate parinvoke)
+            eval "$(micromamba shell activate parinvoke)"
           fi
           python -m pytest --cov=parinvoke --cov-report=xml tests
         shell: bash
