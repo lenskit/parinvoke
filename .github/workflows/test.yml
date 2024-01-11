@@ -53,11 +53,16 @@ jobs:
           environment-file: envs/parinvoke-py${{matrix.python}}-ci.yaml
           environment-name: parinvoke
           cache-environment: true
-          init-shell: bash
 
       - name: Run tests
-        run: python -m pytest --cov=parinvoke --cov-report=xml tests
-        shell: bash -el {0}
+        run: |
+          if [ "$METHOD" = conda ]; then
+            eval $(micromamba shell activate parinvoke)
+          fi
+          python -m pytest --cov=parinvoke --cov-report=xml tests
+        shell: bash
+        env:
+          METHOD: ${{matrix.method}}
 
       - name: Save test results
         uses: lenskit/lkbuild/actions/save-test-results@main
