@@ -4,7 +4,7 @@ on:
     branches:
       - main
   release:
-    types: [created,published]
+    types: [created, published]
   pull_request:
 
 concurrency:
@@ -13,40 +13,55 @@ concurrency:
 
 jobs:
   test:
-    name: Test with Python ${{matrix.python}} on ${{matrix.platform}}
+    name: ${{matrix.method}} Python ${{matrix.python}} on ${{matrix.platform}}
     runs-on: ${{matrix.platform}}-latest
     strategy:
       matrix:
         platform:
-        - macos
-        - windows
-        - ubuntu
+          - macos
+          - windows
+          - ubuntu
         python:
-        - "3.10"
-        - "3.11"
-        - "3.12"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        method:
+          - vanilla
+          - conda
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{matrix.python}}
+      - name: Set up Python
+        if: matrix.method == 'vanilla'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{matrix.python}}
 
-    - name: Set up dependencies
-      run: |
-        pip install -e '.[test]'
+      - name: Set up dependencies
+        if: matrix.method == 'vanilla'
+        run: |
+          pip install -e '.[test]'
 
-    - name: Run tests
-      run: python -m pytest --cov=binpickle --cov-report=xml tests
+      - name: Set up Conda environment
+        if: matrix.method == 'conda'
+        uses: mamba-org/setup-micromamba@v1
+        id: setup-conda
+        with:
+          environment-file: envs/parinvoke-py${{matrix.python}}-ci.yaml
+          environment-name: parinvoke
+          cache-environment: true
+          init-shell: bash
 
-    - name: Save test results
-      uses: lenskit/lkbuild/actions/save-test-results@main
-      with:
-        artifact-name: test-${{matrix.platform}}-py${{matrix.python}}
+      - name: Run tests
+        run: python -m pytest --cov=parinvoke --cov-report=xml tests
+
+      - name: Save test results
+        uses: lenskit/lkbuild/actions/save-test-results@main
+        with:
+          artifact-name: test-${{matrix.platform}}-${{matrix.method}}-py${{matrix.python}}
 
   report:
     name: Process test results
@@ -54,12 +69,12 @@ jobs:
     needs: [test]
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Report test results
-      uses: lenskit/lkbuild/actions/report-test-results@main
+      - name: Report test results
+        uses: lenskit/lkbuild/actions/report-test-results@main
 
   sdist:
     name: Build Source Packages
@@ -67,39 +82,39 @@ jobs:
     needs: [test]
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Fetch Git tags
-      run: git fetch --tags
+      - name: Fetch Git tags
+        run: git fetch --tags
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install Python deps
-      run: pip install -U build twine
+      - name: Install Python deps
+        run: pip install -U build twine
 
-    - name: Build distribution
-      run: python -m build
+      - name: Build distribution
+        run: python -m build
 
-    - name: Save archive
-      uses: actions/upload-artifact@v1
-      with:
-        name: pypi-pkgs
-        path: dist
+      - name: Save archive
+        uses: actions/upload-artifact@v1
+        with:
+          name: pypi-pkgs
+          path: dist
 
-    - name: List dist dir
-      run: ls -R dist
+      - name: List dist dir
+        run: ls -R dist
 
-    - name: Publish PyPI packages
-      if: github.event_name == 'release'
-      run: |
-        twine upload dist/*
-      shell: bash
-      env:
-        TWINE_NON_INTERACTIVE: y
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
+      - name: Publish PyPI packages
+        if: github.event_name == 'release'
+        run: |
+          twine upload dist/*
+        shell: bash
+        env:
+          TWINE_NON_INTERACTIVE: y
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
