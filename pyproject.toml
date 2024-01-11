@@ -36,7 +36,7 @@ dev = [
   "ruff",
   "pyright",
   "copier",
-  "unbeheader",         # p2c: -p
+  "unbeheader",        # p2c: -p
   "ipython",
   "pyproject2conda",
   "sphinx-autobuild",
@@ -44,6 +44,7 @@ dev = [
 test = [
   "pytest >=7",
   "coverage >=5",
+  "pytest-cov >= 2.12",
   "numpy >= 1.21",
 ]
 doc = [
