@@ -13,6 +13,7 @@ dependencies:
   - python=3.10
   - coverage>=5
   - numpy>=1.21
+  - pytest-cov>=2.12
   - pytest>=7
   - threadpoolctl>=3.0
   - pip

@@ -19,6 +19,7 @@ dependencies:
   - numpy>=1.21
   - pyproject2conda
   - pyright
+  - pytest-cov>=2.12
   - pytest>=7
   - ruff
   - setuptools>=64
@@ -32,3 +33,4 @@ dependencies:
   - pip:
       - binpickle~=0.4.0a4
       - seedbank~=0.2.0a1
+      - unbeheader
