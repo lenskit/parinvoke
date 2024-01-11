@@ -57,6 +57,7 @@ jobs:
 
       - name: Run tests
         run: python -m pytest --cov=parinvoke --cov-report=xml tests
+        shell: bash -el {0}
 
       - name: Save test results
         uses: lenskit/lkbuild/actions/save-test-results@main
