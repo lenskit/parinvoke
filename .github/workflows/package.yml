@@ -1,0 +1,58 @@
+name: Package and Publish
+
+on:
+  workflow_run:
+    workflows: [Automated Tests]
+    types:
+      - completed
+
+jobs:
+  dist:
+    name: Build Packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Git tags
+        run: git fetch --tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Python deps
+        run: pip install -U build twine
+
+      - name: Build distribution
+        run: python -m build
+
+      - name: Save archive
+        uses: actions/upload-artifact@v1
+        with:
+          name: pypi-pkgs
+          path: dist
+
+      - name: List dist dir
+        run: ls -R dist
+
+  pypi-publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    environment: release
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Fetch compiled package distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-pkgs
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
