@@ -26,7 +26,7 @@ jobs:
           python-version: "3.10"
 
       - name: Install Python deps
-        run: pip install -U build twine
+        run: pip install -U build
 
       - name: Build distribution
         run: python -m build
