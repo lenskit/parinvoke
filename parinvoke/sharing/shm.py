@@ -6,19 +6,25 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import multiprocessing.shared_memory as shm
 import pickle
 import sys
 from typing import Any, NamedTuple, Optional, TypeVar
 
-from . import PersistedModel, sharing_mode
+from . import PersistedModel
+from ._sharedpickle import SharedPicklerMixin
 
 # we have encountered a number of bugs on Windows
 SHM_AVAILABLE = sys.platform != "win32"
 
 _log = logging.getLogger(__name__)
 T = TypeVar("T")
+
+
+class SharedPickler(pickle.Pickler, SharedPicklerMixin):
+    pass
 
 
 class SHMBlock(NamedTuple):
@@ -39,8 +45,10 @@ def persist_shm(model: T) -> SHMPersisted[T]:
 
     buffers: list[pickle.PickleBuffer] = []
 
-    with sharing_mode():
-        data = pickle.dumps(model, protocol=5, buffer_callback=buffers.append)
+    out = io.BytesIO()
+    pickler = SharedPickler(out, 5, buffer_callback=buffers.append)
+    pickler.dump(model)
+    data = out.getvalue()
 
     total_size = sum(memoryview(b).nbytes for b in buffers)
     _log.info(

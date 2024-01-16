@@ -15,10 +15,15 @@ from typing import Optional, TypeVar, cast
 
 import binpickle
 
-from . import PersistedModel, sharing_mode
+from . import PersistedModel
+from ._sharedpickle import SharedPicklerMixin
 
 _log = logging.getLogger(__name__)
 T = TypeVar("T")
+
+
+class SharingBinPickler(binpickle.BinPickler, SharedPicklerMixin):
+    pass
 
 
 def persist_binpickle(
@@ -45,7 +50,7 @@ def persist_binpickle(
         path = Path(path)
 
     _log.debug("persisting %s to %s", model, path)
-    with binpickle.BinPickler.mappable(path) as bp, sharing_mode():
+    with SharingBinPickler.mappable(path) as bp:
         bp.dump(model)
     return BPKPersisted[T](path)
 

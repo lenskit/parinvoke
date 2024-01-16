@@ -4,25 +4,41 @@
 # Licensed under the MIT license, see LICENSE.md for details.
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
+import io
 import os
+import pickle
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from pytest import mark
 
 from parinvoke import sharing
+from parinvoke.sharing.shm import SharedPickler
 from parinvoke.util import set_env_var
 
 
-def test_sharing_mode():
-    "Ensure sharing mode decorator turns on sharing"
-    assert not sharing.in_share_context()
+class TestSharable:
+    array: NDArray[np.float64]
+    transpose: NDArray[np.float64]
+    flipped: bool = False
 
-    with sharing.sharing_mode():
-        assert sharing.in_share_context()
+    def __init__(self, array: NDArray[np.float64]):
+        self.array = array
+        self.transpose = array.T
 
-    assert not sharing.in_share_context()
+    def _shared_getstate(self):
+        return {"array": self.array}
+
+    def __setstate__(self, state: dict[str, Any]):
+        self.__dict__.update(state)
+        if "transpose" not in state:
+            self.transpose = self.array.T
+            self.flipped = True
 
 
 def test_persist_bpk():
@@ -36,6 +52,33 @@ def test_persist_bpk():
         del m2
     finally:
         share.close()
+
+
+def test_shared_getstate():
+    mat = np.random.randn(100, 50)
+    tso = TestSharable(mat)
+
+    # quick make sure base serialization works
+    native = pickle.dumps(tso, pickle.HIGHEST_PROTOCOL)
+    nres = pickle.loads(native)
+
+    assert nres.array is not tso.array
+    assert np.all(nres.array == tso.array)
+    assert np.all(nres.transpose == tso.transpose)
+    assert not nres.flipped
+
+    out = io.BytesIO()
+    pickler = SharedPickler(out, pickle.HIGHEST_PROTOCOL)
+    pickler.dump(tso)
+
+    out = out.getvalue()
+
+    res = pickle.loads(out)
+
+    assert res.array is not tso.array
+    assert np.all(res.array == tso.array)
+    assert np.all(res.transpose == tso.transpose)
+    assert res.flipped
 
 
 @mark.skipif(not sharing.SHM_AVAILABLE, reason="shared_memory not available")
