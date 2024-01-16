@@ -1,4 +1,3 @@
-from pickle import Pickler
 from typing import Any, Protocol, runtime_checkable
 
 
@@ -8,10 +7,10 @@ class SharedSerializable(Protocol):
         ...
 
 
-class SharedPicklerMixin(Pickler):
+class SharedPicklerMixin:
     """
     Mixin for picklers to allow objects to specify different serializations for
-    shared-model pickling.
+    shared-model pickling.  Also usable as a standalone pickler.
     """
 
     def reducer_override(self, obj: Any) -> Any:

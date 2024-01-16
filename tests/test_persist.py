@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 from pytest import mark
 
 from parinvoke import sharing
-from parinvoke.sharing._sharedpickle import SharedPicklerMixin
+from parinvoke.sharing.shm import SharedPickler
 from parinvoke.util import set_env_var
 
 
@@ -39,16 +39,6 @@ class TestSharable:
         if "transpose" not in state:
             self.transpose = self.array.T
             self.flipped = True
-
-
-def test_sharing_mode():
-    "Ensure sharing mode decorator turns on sharing"
-    assert not sharing.in_share_context()
-
-    with sharing.sharing_mode():
-        assert sharing.in_share_context()
-
-    assert not sharing.in_share_context()
 
 
 def test_persist_bpk():
@@ -78,7 +68,7 @@ def test_shared_getstate():
     assert not nres.flipped
 
     out = io.BytesIO()
-    pickler = SharedPicklerMixin(out, pickle.HIGHEST_PROTOCOL)
+    pickler = SharedPickler(out, pickle.HIGHEST_PROTOCOL)
     pickler.dump(tso)
 
     out = out.getvalue()

@@ -12,44 +12,13 @@ from __future__ import annotations
 
 import logging
 import os
-import threading
 import warnings
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from typing import Callable, Generic, Literal, TypeVar
 
 _log = logging.getLogger(__name__)
 
-_store_state = threading.local()
-
 T = TypeVar("T")
-
-
-def _save_mode():
-    return getattr(_store_state, "mode", "save")
-
-
-@contextmanager
-def sharing_mode():
-    """
-    Context manager to tell models that pickling will be used for cross-process
-    sharing, not model persistence.
-    """
-    old = _save_mode()
-    _store_state.mode = "share"
-    try:
-        yield
-    finally:
-        _store_state.mode = old
-
-
-def in_share_context():
-    """
-    Query whether sharing mode is active.  If ``True``, we are currently in a
-    :func:`sharing_mode` context, which means model pickling will be used for
-    cross-process sharing.
-    """
-    return _save_mode() == "share"
 
 
 class PersistedModel(ABC, Generic[T]):
