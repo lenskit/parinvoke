@@ -43,8 +43,8 @@ dev = [
 ]
 test = [
   "pytest >=7",
+  "pytest-cov >=2.12",
   "coverage >=5",
-  "pytest-cov >= 2.12",
   "numpy >= 1.21",
 ]
 doc = [
