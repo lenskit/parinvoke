@@ -156,9 +156,8 @@ class ParallelConfig:
         * The value provided to the :class:`ParallelConfig` constructor.
         * The ``PARINVOKE_NUM_PROCS`` environment variable and its aliases and
           alternate prefixes (see :ref:`env-vars`).
-        * The number of CPUs, as returned by :func:`mp.cpu_count`.
-
-        If the process
+        * The number of CPUs, as returned by :func:`mp.cpu_count`, capped by
+          :attr:`max_default`.
 
         Args:
             level:
