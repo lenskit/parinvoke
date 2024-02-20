@@ -84,6 +84,17 @@ class BPKContext(Context):
             bp.dump(model)
         return BPKPersisted[T](path)
 
+    def teardown(self):
+        super().teardown()
+        if not self.dir:
+            return
+
+        for file in self.dir.glob("*.bpk"):
+            _log.debug("removing %s", file)
+            file.unlink()
+
+        self.dir.unlink()
+
 
 class BPKPersisted(PersistedModel[T]):
     path: Path
