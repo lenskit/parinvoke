@@ -67,7 +67,7 @@ class BPKContext(Context):
         super().__init__(config)
 
         if dir is None:
-            td = config._get_env_var("TEMP_DIR")
+            td = config.env_var("TEMP_DIR")
             if td is not None:
                 name, dir = td
                 _log.debug("configured from $%s: %s", name, dir)

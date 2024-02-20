@@ -99,16 +99,17 @@ class ParallelConfig:
         self.aliases[name].append(VarName(alias, deprecated))
 
     @overload
-    def _get_env_var(self, name: str) -> tuple[str, str] | None:
+    def env_var(self, name: str) -> tuple[str, str] | None:
         ...
 
     @overload
-    def _get_env_var(self, name: str, cast: Callable[[str], T]) -> tuple[str, T] | None:
+    def env_var(self, name: str, cast: Callable[[str], T]) -> tuple[str, T] | None:
         ...
 
-    def _get_env_var(self, name: str, cast: Callable[[str], object] | None = None):
+    def env_var(self, name: str, cast: Callable[[str], object] | None = None):
         """
-        Get an environment variable.
+        Get an environment variable by name, optionally casting, and looking up
+        with all configured prefixes.
         """
         for vn in self._var_names(name):
             val = os.environ.get(vn.name, None)
@@ -135,7 +136,7 @@ class ParallelConfig:
         if self.proc_counts is not None:
             return
 
-        npv = self._get_env_var("NUM_PROCS")
+        npv = self.env_var("NUM_PROCS")
         if npv is not None:
             vn, nprocs = npv
             _log.debug("found process count config in %s=%s", vn, nprocs)
