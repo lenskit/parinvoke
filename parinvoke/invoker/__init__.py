@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Concatenate, Generic, Iterator, ParamSpec, TypeVar
-
-from parinvoke.config import ParallelConfig
+from typing import Any, Generic, Iterator, ParamSpec, TypeVar
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -40,43 +38,3 @@ class ModelOpInvoker(ABC, Generic[T, R]):
 
     def __exit__(self, *args: Any):
         self.shutdown()
-
-
-def invoker(
-    model: T,
-    func: Callable[Concatenate[T, P], R],
-    n_jobs: int | None = None,
-    *,
-    persist_method: str | None = None,
-    config: ParallelConfig | None = None,
-) -> ModelOpInvoker[T, R]:
-    """
-    Get an appropriate invoker for performing oeprations on ``model``.
-
-    Args:
-        model(obj): The model object on which to perform operations.
-        func(function): The function to call.  The function must be pickleable.
-        n_jobs(int or None):
-            The number of processes to use for parallel operations.  If ``None``, will
-            call :func:`proc_count` with a maximum default process count of 4.
-        persist_method(str or None):
-            The persistence method to use.  Passed as ``method`` to
-            :func:`lenskit.sharing.persist`.
-
-    Returns:
-        ModelOpInvoker:
-            An invoker to perform operations on the model.
-    """
-    if config is None:
-        config = ParallelConfig.default()
-    if n_jobs is None:
-        n_jobs = config.proc_count()
-
-    if n_jobs == 1:
-        from .inproc import InProcessOpInvoker
-
-        return InProcessOpInvoker(model, func)
-    else:
-        from .pool import ProcessPoolOpInvoker
-
-        return ProcessPoolOpInvoker(model, func, n_jobs, persist_method, config)
