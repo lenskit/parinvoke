@@ -14,8 +14,8 @@ import sys
 from multiprocessing.managers import SharedMemoryManager
 from typing import Any, NamedTuple, Optional, TypeVar
 
-from parinvoke.config import ParallelConfig
-from parinvoke.context import Context
+from parinvoke.config import InvokeConfig
+from parinvoke.context import InvokeContext
 
 from . import PersistedModel
 from ._sharedpickle import SharedPicklerMixin
@@ -84,7 +84,7 @@ def persist_shm(model: T) -> SHMPersisted[T]:
     return SHMPersisted[T](data, memory, blocks)
 
 
-class SHMContext(Context):
+class SHMContext(InvokeContext):
     """
     BinPickle context using shared memory.
     """
@@ -92,9 +92,9 @@ class SHMContext(Context):
     owner: bool = False
     manager: SharedMemoryManager
 
-    def __init__(self, config: ParallelConfig | None = None) -> None:
+    def __init__(self, config: InvokeConfig | None = None) -> None:
         if config is None:
-            config = ParallelConfig.default()
+            config = InvokeConfig.default()
         super().__init__(config)
 
         self.owner = True

@@ -15,9 +15,9 @@ from typing import Optional, TypeVar, cast
 
 import binpickle
 
-from parinvoke.config import ParallelConfig
+from parinvoke.config import InvokeConfig
 
-from ..context import Context
+from ..context import InvokeContext
 from . import PersistedModel
 from ._sharedpickle import SharedPicklerMixin
 
@@ -58,12 +58,12 @@ def persist_binpickle(
     return BPKPersisted[T](path)
 
 
-class BPKContext(Context):
+class BPKContext(InvokeContext):
     dir: Path | None
 
-    def __init__(self, dir: str | Path | None = None, config: ParallelConfig | None = None) -> None:
+    def __init__(self, dir: str | Path | None = None, config: InvokeConfig | None = None) -> None:
         if config is None:
-            config = ParallelConfig.default()
+            config = InvokeConfig.default()
         super().__init__(config)
 
         if dir is None:

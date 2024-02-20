@@ -14,7 +14,7 @@ from typing import Any, Callable, ParamSpec, TypeVar
 import seedbank
 from numpy.random import SeedSequence
 
-from parinvoke.context import Context
+from parinvoke.context import InvokeContext
 from parinvoke.logging import log_queue
 
 T = TypeVar("T")
@@ -26,7 +26,7 @@ def _sp_worker(
     log_queue: mp.Queue[logging.LogRecord],
     seed: SeedSequence,
     res_queue: mp.Queue[tuple[bool, Any | Exception]],
-    context: Context,
+    context: InvokeContext,
     func_pkl: bytes,
     args: list[Any],
     kwargs: dict[str, Any],
@@ -44,7 +44,7 @@ def _sp_worker(
         res_queue.put((False, e))
 
 
-def run_sp(context: Context, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+def run_sp(context: InvokeContext, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
     """
     Run a function in a subprocess and return its value.  This is for achieving subprocess
     isolation, not parallelism.  The subprocess is configured so things like logging work

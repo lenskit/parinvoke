@@ -24,7 +24,7 @@ class VarName(NamedTuple):
     deprecated: bool = False
 
 
-class ParallelConfig:
+class InvokeConfig:
     """
     Configuration settings for the parallel backend.
 
@@ -88,7 +88,7 @@ class ParallelConfig:
 
     @staticmethod
     def default():
-        return ParallelConfig()
+        return InvokeConfig()
 
     def add_alias(self, alias: str, name: str, *, deprecated: bool = False):
         """

@@ -14,14 +14,14 @@ import numpy.typing as npt
 
 from pytest import approx, fixture, mark  # type: ignore
 
-from parinvoke import Context, is_mp_worker, is_worker
+from parinvoke import InvokeContext, is_mp_worker, is_worker
 
 _log = logging.getLogger(__name__)
 
 
 @fixture
 def ctx():
-    with Context.default() as ctx:
+    with InvokeContext.default() as ctx:
         yield ctx
 
 
@@ -35,7 +35,7 @@ def _worker_status(blob: str, *args: Any):
 
 
 @mark.parametrize("n_jobs", [None, 1, 2, 8])
-def test_invoke_matrix(ctx: Context, n_jobs: int | None):
+def test_invoke_matrix(ctx: InvokeContext, n_jobs: int | None):
     matrix = np.random.randn(100, 100)
     vectors = [np.random.randn(100) for _i in range(100)]
     with ctx.invoker(matrix, _mul_op, n_jobs) as inv:
@@ -45,7 +45,7 @@ def test_invoke_matrix(ctx: Context, n_jobs: int | None):
             assert act_rv == approx(rv, abs=1.0e-6)
 
 
-def test_mp_is_worker(ctx: Context):
+def test_mp_is_worker(ctx: InvokeContext):
     with ctx.invoker("foo", _worker_status, 2) as loop:
         res = list(loop.map(range(10)))
         assert all([w for (_pid, w, _mpw) in res])

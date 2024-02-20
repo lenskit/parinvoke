@@ -10,7 +10,7 @@ from inspect import Traceback
 from threading import local
 from typing import Callable, Concatenate, ParamSpec, TypeVar
 
-from parinvoke.config import ParallelConfig
+from parinvoke.config import InvokeConfig
 from parinvoke.invoker import ModelOpInvoker
 
 _log = logging.getLogger()
@@ -20,7 +20,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Context(ABC):
+class InvokeContext(ABC):
     """
     Context for parallel and subprocess invocation.  This is the primary entry
     point for parinvoke operations.
@@ -31,18 +31,18 @@ class Context(ABC):
     context manager protocol to automate this process.
     """
 
-    config: ParallelConfig
+    config: InvokeConfig
 
-    def __init__(self, config: ParallelConfig) -> None:
+    def __init__(self, config: InvokeConfig) -> None:
         super().__init__()
         self.config = config
 
     @staticmethod
-    def default(config: ParallelConfig | None = None) -> Context:
+    def default(config: InvokeConfig | None = None) -> InvokeContext:
         from parinvoke.sharing.shm import SHM_AVAILABLE, SHMContext
 
         if config is None:
-            config = ParallelConfig.default()
+            config = InvokeConfig.default()
 
         var = config.env_var("TEMP_DIR")
 
@@ -60,7 +60,7 @@ class Context(ABC):
         return BPKContext(dir, config)
 
     @staticmethod
-    def current() -> Context:
+    def current() -> InvokeContext:
         from ._worker import child_persist_context, is_worker
 
         if is_worker():

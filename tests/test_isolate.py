@@ -15,7 +15,7 @@ from seedbank import root_seed
 import pytest
 from pytest import fixture, raises
 
-from parinvoke import Context, is_mp_worker, is_worker
+from parinvoke import InvokeContext, is_mp_worker, is_worker
 from parinvoke.sharing import SHM_AVAILABLE, BPKContext, SHMContext
 
 _log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ _static_is_mpw = is_mp_worker()
 
 @fixture
 def ctx():
-    with Context.default() as ctx:
+    with InvokeContext.default() as ctx:
         yield ctx
 
 
@@ -49,11 +49,11 @@ def _sp_matmul(a1, a2, *, fail=False):
 
 def _sp_matmul_p(a1, a2, *, fail=False):
     _log.info("in worker process")
-    ctx = Context.current()
+    ctx = InvokeContext.current()
     return ctx.persist(a1 @ a2).transfer()
 
 
-def test_run_sp(ctx: Context):
+def test_run_sp(ctx: InvokeContext):
     a1 = np.random.randn(100, 100)
     a2 = np.random.randn(100, 100)
 
@@ -61,7 +61,7 @@ def test_run_sp(ctx: Context):
     assert np.all(res == a1 @ a2)
 
 
-def test_run_sp_fail(ctx: Context):
+def test_run_sp_fail(ctx: InvokeContext):
     a1 = np.random.randn(100, 100)
     a2 = np.random.randn(100, 100)
 
@@ -78,7 +78,7 @@ def test_run_sp_persist(method):
     a2 = np.random.randn(100, 100)
 
     if method is None:
-        ctx = Context.default()
+        ctx = InvokeContext.default()
     elif method == "shm":
         ctx = SHMContext()
     elif method == "binpickle":
@@ -93,14 +93,14 @@ def test_run_sp_persist(method):
             res.close()
 
 
-def test_sp_is_worker(ctx: Context):
+def test_sp_is_worker(ctx: InvokeContext):
     pid, w, mpw = ctx.run_sp(_worker_status, "fishtank")
     assert pid != os.getpid()
     assert w
     assert not mpw
 
 
-def test_sp_is_worker_static(ctx: Context):
+def test_sp_is_worker_static(ctx: InvokeContext):
     pid, w, mpw = ctx.run_sp(_static_worker_status, "fishtank")
     assert pid != os.getpid()
     assert w
@@ -111,7 +111,7 @@ def _get_seed():
     return root_seed()
 
 
-def test_sp_random_seed(ctx: Context):
+def test_sp_random_seed(ctx: InvokeContext):
     init = root_seed()
     seed = ctx.run_sp(_get_seed)
     # we should spawn a seed for the worker

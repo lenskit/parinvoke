@@ -7,7 +7,7 @@ from typing import Any, Callable, Concatenate, Iterator, cast
 import seedbank
 
 from parinvoke._worker import initialize_mp_worker, mp_invoke_worker
-from parinvoke.context import Context
+from parinvoke.context import InvokeContext
 from parinvoke.invoker import ModelOpInvoker, P, R, T
 from parinvoke.logging import log_queue
 from parinvoke.sharing import PersistedModel
@@ -17,10 +17,10 @@ _log = logging.getLogger(__name__)
 
 class ProcessPoolOpInvoker(ModelOpInvoker[T, R]):
     _close_key = None
-    context: Context
+    context: InvokeContext
 
     def __init__(
-        self, model: T, func: Callable[Concatenate[T, P], R], n_jobs: int, context: Context
+        self, model: T, func: Callable[Concatenate[T, P], R], n_jobs: int, context: InvokeContext
     ):
         self.context = context
         key: PersistedModel[T]
