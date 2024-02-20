@@ -56,7 +56,7 @@ class Context(ABC):
         Initialize the context so it is ready to run.
 
         .. note::
-            Even though the current superclass implemenation does nothing, subclasses
+            Even though the current superclass implementation does nothing, subclasses
             **must** call it.
         """
         pass
