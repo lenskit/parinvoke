@@ -15,11 +15,27 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from pytest import mark
+from pytest import fixture, skip
 
 from parinvoke import sharing
-from parinvoke.sharing.shm import SharedPickler
+from parinvoke.sharing.binpickle import BPKContext
+from parinvoke.sharing.shm import SharedPickler, SHMContext
 from parinvoke.util import set_env_var
+
+
+@fixture
+def shm_context():
+    if not sharing.SHM_AVAILABLE:
+        skip("shared memory not available")
+
+    with SHMContext() as shm:
+        yield shm
+
+
+@fixture
+def bpk_context():
+    with BPKContext() as bpk:
+        yield bpk
 
 
 class TestSharable:
@@ -39,19 +55,6 @@ class TestSharable:
         if "transpose" not in state:
             self.transpose = self.array.T
             self.flipped = True
-
-
-def test_persist_bpk():
-    matrix = np.random.randn(1000, 100)
-    share = sharing.persist_binpickle(matrix)
-    try:
-        assert share.path.exists()
-        m2 = share.get()
-        assert m2 is not matrix
-        assert np.all(m2 == matrix)
-        del m2
-    finally:
-        share.close()
 
 
 def test_shared_getstate():
@@ -81,11 +84,11 @@ def test_shared_getstate():
     assert res.flipped
 
 
-@mark.skipif(not sharing.SHM_AVAILABLE, reason="shared_memory not available")
-def test_persist_shm():
+def test_persist_bpk(bpk_context: BPKContext):
     matrix = np.random.randn(1000, 100)
-    share = sharing.persist_shm(matrix)
+    share = bpk_context.persist(matrix)
     try:
+        assert share.path.exists()
         m2 = share.get()
         assert m2 is not matrix
         assert np.all(m2 == matrix)
@@ -94,10 +97,9 @@ def test_persist_shm():
         share.close()
 
 
-def test_persist():
-    "Test default persistence"
+def test_persist_shm(shm_context: SHMContext):
     matrix = np.random.randn(1000, 100)
-    share = sharing.persist(matrix)
+    share = shm_context.persist(matrix)
     try:
         m2 = share.get()
         assert m2 is not matrix
@@ -113,22 +115,6 @@ def test_persist_dir(tmp_path: Path):
     with set_env_var("LK_TEMP_DIR", os.fspath(tmp_path)):
         share = sharing.persist(matrix)
         assert isinstance(share, sharing.binpickle.BPKPersisted)
-
-    try:
-        m2 = share.get()
-        assert m2 is not matrix
-        assert np.all(m2 == matrix)
-        del m2
-    finally:
-        share.close()
-
-
-def test_persist_method():
-    "Test persistence with a specified method"
-    matrix = np.random.randn(1000, 100)
-
-    share = sharing.persist(matrix, method="binpickle")
-    assert isinstance(share, sharing.binpickle.BPKPersisted)
 
     try:
         m2 = share.get()
