@@ -14,6 +14,7 @@ from typing import Any, Callable, ParamSpec, TypeVar
 import seedbank
 from numpy.random import SeedSequence
 
+from parinvoke._worker import initialize_worker
 from parinvoke.context import InvokeContext
 from parinvoke.logging import log_queue
 
@@ -31,7 +32,7 @@ def _sp_worker(
     args: list[Any],
     kwargs: dict[str, Any],
 ):
-    # initialize_worker(log_queue, seed, context=context)
+    initialize_worker(log_queue, seed, context=context)
     _log.debug("unpickling worker function")
     func = pickle.loads(func_pkl)
     _log.debug("running %s in worker", func)
