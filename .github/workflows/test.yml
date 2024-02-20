@@ -11,61 +11,44 @@ concurrency:
 
 jobs:
   test:
-    name: ${{matrix.method}} Python ${{matrix.python}} on ${{matrix.platform}}
-    runs-on: ${{matrix.platform}}-latest
+    name: Test with Python ${{matrix.python}} on ${{matrix.platform}}
+    runs-on: ${{matrix.platform}}
     strategy:
       matrix:
         platform:
-          - macos
-          - windows
-          - ubuntu
+        - macos-latest
+        - windows-latest
+        - ubuntu-latest
+        - macos-14
         python:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-        method:
-          - vanilla
-          - conda
+        - "3.10"
+        - "3.11"
+        - "3.12"
+        exclude:
+          - platform: macos
+            python: 3.9
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Set up Python
-        if: matrix.method == 'vanilla'
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{matrix.python}}
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{matrix.python}}
 
-      - name: Set up dependencies
-        if: matrix.method == 'vanilla'
-        run: |
-          pip install -e '.[test]'
+    - name: Set up dependencies
+      run: |
+        pip install -e '.[test]'
 
-      - name: Set up Conda environment
-        if: matrix.method == 'conda'
-        uses: mamba-org/setup-micromamba@v1
-        id: setup-conda
-        with:
-          environment-file: envs/parinvoke-py${{matrix.python}}-ci.yaml
-          environment-name: parinvoke
-          cache-environment: true
+    - name: Run tests
+      run: python -m pytest --cov=parinoke --cov-report=xml tests
 
-      - name: Run tests
-        run: |
-          if [ "$METHOD" = conda ]; then
-            eval "$(micromamba shell activate parinvoke)"
-          fi
-          python -m pytest --cov=parinvoke --cov-report=xml tests
-        shell: bash
-        env:
-          METHOD: ${{matrix.method}}
-
-      - name: Save test results
-        uses: lenskit/lkbuild/actions/save-test-results@main
-        with:
-          artifact-name: test-${{matrix.platform}}-${{matrix.method}}-py${{matrix.python}}
+    - name: Save test results
+      uses: lenskit/lkbuild/actions/save-test-results@main
+      with:
+        artifact-name: test-${{matrix.platform}}-py${{matrix.python}}
 
   report:
     name: Process test results
@@ -73,10 +56,9 @@ jobs:
     needs: [test]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Report test results
-        uses: lenskit/lkbuild/actions/report-test-results@main
-
+    - name: Report test results
+      uses: lenskit/lkbuild/actions/report-test-results@main
