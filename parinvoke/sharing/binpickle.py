@@ -74,7 +74,7 @@ class BPKContext(Context):
 
         self.dir = Path(dir) if dir else None
 
-    def persist(self, model: T) -> PersistedModel[T]:
+    def persist(self, model: T) -> BPKPersisted[T]:
         fd, path = tempfile.mkstemp(suffix=".bpk", prefix="lkpy-", dir=self.dir)
         os.close(fd)
         path = Path(path)

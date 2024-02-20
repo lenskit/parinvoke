@@ -122,7 +122,7 @@ class SHMContext(Context):
         self.config = state["config"]
         self.manager = SharedMemoryManager(state["@mgr_address"])
 
-    def persist(self, model: T) -> PersistedModel[T]:
+    def persist(self, model: T) -> SHMPersisted[T]:
         buffers: list[pickle.PickleBuffer] = []
 
         out = io.BytesIO()
