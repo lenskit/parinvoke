@@ -16,7 +16,8 @@ import pytest
 from pytest import fixture, raises
 
 from parinvoke import InvokeContext, is_mp_worker, is_worker
-from parinvoke.sharing import SHM_AVAILABLE, BPKContext, SHMContext
+from parinvoke.sharing.binpickle import BPKContext
+from parinvoke.sharing.shm import SHM_AVAILABLE, SHMContext
 
 _log = logging.getLogger(__name__)
 
