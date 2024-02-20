@@ -12,9 +12,6 @@ from importlib.metadata import PackageNotFoundError, version
 
 from ._worker import is_mp_worker, is_worker
 from .context import Context
-from .invoker import invoker
-from .isolate import run_sp
-from .sharing import persist
 
 try:
     __version__ = version("parinvoke")
@@ -22,4 +19,4 @@ except PackageNotFoundError:
     # package is not installed
     pass
 
-__all__ = ["Context", "invoker", "run_sp", "persist", "is_worker", "is_mp_worker"]
+__all__ = ["Context", "is_worker", "is_mp_worker"]
