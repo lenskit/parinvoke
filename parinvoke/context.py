@@ -120,7 +120,17 @@ class Context(ABC):
         Returns:
             An invoker to perform operations on the model.
         """
-        raise NotImplementedError()
+        if n_jobs is None:
+            n_jobs = self.config.proc_count()
+
+        if n_jobs == 1:
+            from .invoker.inproc import InProcessOpInvoker
+
+            return InProcessOpInvoker(model, func)
+        else:
+            from .invoker.pool import ProcessPoolOpInvoker
+
+            return ProcessPoolOpInvoker(model, func, n_jobs, self)
 
     def run_sp(self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         """
