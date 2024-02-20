@@ -37,7 +37,7 @@ class Context(ABC):
         self.config = config
 
     @staticmethod
-    def default(config: ParallelConfig | None) -> Context:
+    def default(config: ParallelConfig | None = None) -> Context:
         from parinvoke.sharing.shm import SHM_AVAILABLE, SHMContext
 
         if config is None:
