@@ -11,7 +11,11 @@ import logging
 import multiprocessing.shared_memory as shm
 import pickle
 import sys
+from multiprocessing.managers import SharedMemoryManager
 from typing import Any, NamedTuple, Optional, TypeVar
+
+from parinvoke.config import ParallelConfig
+from parinvoke.context import Context
 
 from . import PersistedModel
 from ._sharedpickle import SharedPicklerMixin
@@ -80,28 +84,101 @@ def persist_shm(model: T) -> SHMPersisted[T]:
     return SHMPersisted[T](data, memory, blocks)
 
 
+class SHMContext(Context):
+    """
+    BinPickle context using shared memory.
+    """
+
+    owner: bool = False
+    manager: SharedMemoryManager
+
+    def __init__(self, config: ParallelConfig | None = None) -> None:
+        if config is None:
+            config = ParallelConfig.default()
+        super().__init__(config)
+
+        self.owner = True
+        self.manager = SharedMemoryManager()
+
+    def setup(self):
+        if not self.owner:  # no cover
+            raise RuntimeError("cannot set up worker-process context")
+        super().setup()
+        self.manager.start()
+
+    def teardown(self):
+        if not self.owner:  # no cover
+            raise RuntimeError("cannot tear down worker-process context")
+        super().teardown()
+        self.manager.shutdown()
+
+    def __getstate__(self):
+        return {
+            "config": self.config,
+            "@mgr_address": self.manager.address,
+        }
+
+    def __setstate__(self, state: dict[str, Any]):
+        self.config = state["config"]
+        self.manager = SharedMemoryManager(state["@mgr_address"])
+
+    def persist(self, model: T) -> PersistedModel[T]:
+        buffers: list[pickle.PickleBuffer] = []
+
+        out = io.BytesIO()
+        pickler = SharedPickler(out, 5, buffer_callback=buffers.append)
+        pickler.dump(model)
+        data = out.getvalue()
+
+        total_size = sum(memoryview(b).nbytes for b in buffers)
+        _log.info(
+            "serialized %s to %d pickle bytes with %d buffers of %d bytes",
+            model,
+            len(data),
+            len(buffers),
+            total_size,
+        )
+
+        if buffers:
+            # blit the buffers to the SHM block
+            _log.debug("preparing to share %d buffers", len(buffers))
+            memory = self.manager.SharedMemory(size=total_size)
+            cur_offset = 0
+            blocks: list[SHMBlock] = []
+            for i, buf in enumerate(buffers):
+                ba = buf.raw()
+                blen = ba.nbytes
+                bend = cur_offset + blen
+                _log.debug("saving %d bytes in buffer %d/%d", blen, i + 1, len(buffers))
+                memory.buf[cur_offset:bend] = ba
+                blocks.append(SHMBlock(cur_offset, bend))
+                cur_offset = bend
+        else:
+            memory = None
+            blocks = []
+
+        return SHMPersisted[T](data, memory, blocks)
+
+
 class SHMPersisted(PersistedModel[T]):
     pickle_data: bytes
     blocks: list[SHMBlock]
     memory: Optional[shm.SharedMemory] = None
-    shm_name: str | None = None
     _model: Optional[T] = None
 
     def __init__(self, data: bytes, memory: shm.SharedMemory | None, blocks: list[SHMBlock]):
         self.pickle_data = data
         self.blocks = blocks
         self.memory = memory
-        self.shm_name = memory.name if memory is not None else None
         self.is_owner = True
 
     def get(self):
         if self._model is None:
             _log.debug("loading model from shared memory")
-            shm = self._open()
             buffers: list[memoryview] = []
             for bs, be in self.blocks:
-                assert shm is not None, "persisted object with blocks has no shared memory"
-                buffers.append(shm.buf[bs:be])
+                assert self.memory is not None, "persisted object with blocks has no shared memory"
+                buffers.append(self.memory.buf[bs:be])
 
             self._model = pickle.loads(self.pickle_data, buffers=buffers)
 
@@ -118,24 +195,13 @@ class SHMPersisted(PersistedModel[T]):
                 self.is_owner = False
             self.memory = None
 
-    def _open(self) -> shm.SharedMemory | None:
-        if self.shm_name and not self.memory:
-            self.memory = shm.SharedMemory(name=self.shm_name)
-        return self.memory
-
     def __getstate__(self):
         return {
             "pickle_data": self.pickle_data,
             "blocks": self.blocks,
-            "shm_name": self.shm_name,
+            "memory": self.memory,
             "is_owner": True if self.is_owner == "transfer" else False,
         }
-
-    def __setstate__(self, state: dict[str, Any]):
-        self.__dict__.update(state)
-        if self.is_owner:
-            _log.debug("opening shared buffers after ownership transfer")
-            self._open()
 
     def __del__(self):
         self.close(False)

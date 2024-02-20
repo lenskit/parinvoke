@@ -15,6 +15,9 @@ from typing import Optional, TypeVar, cast
 
 import binpickle
 
+from parinvoke.config import ParallelConfig
+
+from ..context import Context
 from . import PersistedModel
 from ._sharedpickle import SharedPicklerMixin
 
@@ -53,6 +56,33 @@ def persist_binpickle(
     with SharingBinPickler.mappable(path) as bp:
         bp.dump(model)
     return BPKPersisted[T](path)
+
+
+class BPKContext(Context):
+    dir: Path | None
+
+    def __init__(self, dir: str | Path | None = None, config: ParallelConfig | None = None) -> None:
+        if config is None:
+            config = ParallelConfig.default()
+        super().__init__(config)
+
+        if dir is None:
+            td = config._get_env_var("TEMP_DIR")
+            if td is not None:
+                name, dir = td
+                _log.debug("configured from $%s: %s", name, dir)
+
+        self.dir = Path(dir) if dir else None
+
+    def persist(self, model: T) -> PersistedModel[T]:
+        fd, path = tempfile.mkstemp(suffix=".bpk", prefix="lkpy-", dir=self.dir)
+        os.close(fd)
+        path = Path(path)
+
+        _log.debug("persisting %s to %s", model, path)
+        with SharingBinPickler.mappable(path) as bp:
+            bp.dump(model)
+        return BPKPersisted[T](path)
 
 
 class BPKPersisted(PersistedModel[T]):

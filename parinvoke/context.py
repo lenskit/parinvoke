@@ -23,9 +23,9 @@ class Context(ABC):
     point for parinvoke operations.
 
     The context manages general configuration as well as resources like shared
-    memory managers.  It must be explicitly started (:meth:`setup`), and then
-    closed after use (:meth:`teardown`).  It supports the context manager
-    protocol to automate this process.
+    memory managers.  It must be explicitly started (:meth:`setup`) and closed
+    after use (:meth:`teardown`) **in the parent process**.  It supports the
+    context manager protocol to automate this process.
     """
 
     config: ParallelConfig
@@ -35,7 +35,7 @@ class Context(ABC):
         self.config = config
 
     @abstractmethod
-    def persist(model: T) -> PersistedModel[T]:
+    def persist(self, model: T) -> PersistedModel[T]:
         """
         Persist a model for cross-process sharing.
 
