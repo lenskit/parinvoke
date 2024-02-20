@@ -9,7 +9,7 @@ from inspect import Traceback
 from typing import Callable, Concatenate, ParamSpec, TypeVar
 
 from parinvoke.config import ParallelConfig
-from parinvoke.parallel import ModelOpInvoker
+from parinvoke.invoker import ModelOpInvoker
 from parinvoke.sharing import PersistedModel
 
 T = TypeVar("T")

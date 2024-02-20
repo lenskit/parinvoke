@@ -11,8 +11,8 @@ Invoke operations on large models in parallel.
 from importlib.metadata import PackageNotFoundError, version
 
 from ._worker import is_mp_worker, is_worker
+from .invoker import invoker
 from .isolate import run_sp
-from .parallel import invoker
 from .sharing import persist
 
 try:

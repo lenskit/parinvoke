@@ -13,10 +13,15 @@ import faulthandler
 import logging
 import logging.handlers
 import multiprocessing as mp
-from typing import TypeVar
+import os
+import pickle
+from typing import Any, TypeVar
 
 import seedbank
 from numpy.random import SeedSequence
+from threadpoolctl import threadpool_limits
+
+from parinvoke.sharing import PersistedModel
 
 T = TypeVar("T")
 _log = logging.getLogger(__name__)
@@ -52,3 +57,29 @@ def initialize_worker(
         h.setLevel(logging.DEBUG)
 
     _log.debug("worker %s initialized", mp.current_process().name)
+
+
+def mp_invoke_worker(*args: Any):
+    model = __work_model.get()
+    return __work_func(model, *args)
+
+
+def initialize_mp_worker(
+    model: PersistedModel[object],
+    func: bytes,
+    threads: int,
+    log_queue: mp.Queue[logging.LogRecord] | None,
+    seed: SeedSequence | None,
+):
+    seed = seedbank.derive_seed(mp.current_process().name, base=seed)
+    initialize_worker(log_queue, seed, True)
+    global __work_model, __work_func
+
+    # disable BLAS threading
+    threadpool_limits(limits=threads, user_api="blas")
+
+    __work_model = model
+    # deferred function unpickling to minimize imports before initialization
+    __work_func = pickle.loads(func)
+
+    _log.debug("worker %d ready (process %s)", os.getpid(), mp.current_process())
