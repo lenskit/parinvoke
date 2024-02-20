@@ -13,16 +13,21 @@ import numpy as np
 from seedbank import root_seed
 
 import pytest
-from pytest import raises
+from pytest import fixture, raises
 
-from parinvoke import is_mp_worker, is_worker
-from parinvoke.isolate import run_sp
-from parinvoke.sharing import SHM_AVAILABLE, persist
+from parinvoke import Context, is_mp_worker, is_worker
+from parinvoke.sharing import SHM_AVAILABLE, BPKContext, SHMContext
 
 _log = logging.getLogger(__name__)
 
 _static_isw = is_worker()
 _static_is_mpw = is_mp_worker()
+
+
+@fixture
+def ctx():
+    with Context.default() as ctx:
+        yield ctx
 
 
 def _static_worker_status(_msg):
@@ -42,25 +47,26 @@ def _sp_matmul(a1, a2, *, fail=False):
         return a1 @ a2
 
 
-def _sp_matmul_p(a1, a2, *, method=None, fail=False):
+def _sp_matmul_p(a1, a2, *, fail=False):
     _log.info("in worker process")
-    return persist(a1 @ a2, method=method).transfer()
+    ctx = Context.current()
+    return ctx.persist(a1 @ a2).transfer()
 
 
-def test_run_sp():
+def test_run_sp(ctx: Context):
     a1 = np.random.randn(100, 100)
     a2 = np.random.randn(100, 100)
 
-    res = run_sp(_sp_matmul, a1, a2)
+    res = ctx.run_sp(_sp_matmul, a1, a2)
     assert np.all(res == a1 @ a2)
 
 
-def test_run_sp_fail():
+def test_run_sp_fail(ctx: Context):
     a1 = np.random.randn(100, 100)
     a2 = np.random.randn(100, 100)
 
     with raises(ChildProcessError):
-        run_sp(_sp_matmul, a1, a2, fail=True)
+        ctx.run_sp(_sp_matmul, a1, a2, fail=True)
 
 
 @pytest.mark.parametrize("method", [None, "binpickle", "shm"])
@@ -71,23 +77,31 @@ def test_run_sp_persist(method):
     a1 = np.random.randn(100, 100)
     a2 = np.random.randn(100, 100)
 
-    res = run_sp(_sp_matmul_p, a1, a2, method=method)
-    try:
-        assert res.is_owner
-        assert np.all(res.get() == a1 @ a2)
-    finally:
-        res.close()
+    if method is None:
+        ctx = Context.default()
+    elif method == "shm":
+        ctx = SHMContext()
+    elif method == "binpickle":
+        ctx = BPKContext()
+
+    with ctx:
+        res = ctx.run_sp(_sp_matmul_p, a1, a2)
+        try:
+            assert res.is_owner
+            assert np.all(res.get() == a1 @ a2)
+        finally:
+            res.close()
 
 
-def test_sp_is_worker():
-    pid, w, mpw = run_sp(_worker_status, "fishtank")
+def test_sp_is_worker(ctx: Context):
+    pid, w, mpw = ctx.run_sp(_worker_status, "fishtank")
     assert pid != os.getpid()
     assert w
     assert not mpw
 
 
-def test_sp_is_worker_static():
-    pid, w, mpw = run_sp(_static_worker_status, "fishtank")
+def test_sp_is_worker_static(ctx: Context):
+    pid, w, mpw = ctx.run_sp(_static_worker_status, "fishtank")
     assert pid != os.getpid()
     assert w
     assert not mpw
@@ -97,9 +111,9 @@ def _get_seed():
     return root_seed()
 
 
-def test_sp_random_seed():
+def test_sp_random_seed(ctx: Context):
     init = root_seed()
-    seed = run_sp(_get_seed)
+    seed = ctx.run_sp(_get_seed)
     # we should spawn a seed for the worker
     assert seed.entropy == init.entropy
     assert seed.spawn_key == (init.n_children_spawned - 1,)

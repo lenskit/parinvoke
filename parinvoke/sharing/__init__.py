@@ -120,5 +120,5 @@ def persist(
     return persist(model)
 
 
-from .binpickle import persist_binpickle  # noqa: E402,F401
-from .shm import SHM_AVAILABLE, persist_shm  # noqa: E402,F401
+from .binpickle import BPKContext, persist_binpickle  # noqa: E402,F401
+from .shm import SHM_AVAILABLE, SHMContext, persist_shm  # noqa: E402,F401

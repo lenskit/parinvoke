@@ -21,12 +21,14 @@ import seedbank
 from numpy.random import SeedSequence
 from threadpoolctl import threadpool_limits
 
+from parinvoke.context import Context
 from parinvoke.sharing import PersistedModel
 
 T = TypeVar("T")
 _log = logging.getLogger(__name__)
 __is_worker = False
 __is_mp_worker = False
+child_persist_context: Context | None = None
 
 
 def is_worker() -> bool:
@@ -40,10 +42,14 @@ def is_mp_worker() -> bool:
 
 
 def initialize_worker(
-    log_queue: mp.Queue[logging.LogRecord] | None, seed: SeedSequence | None, multi: bool = False
+    log_queue: mp.Queue[logging.LogRecord] | None,
+    seed: SeedSequence | None,
+    multi: bool = False,
+    context: Context | None = None,
 ):
     "Initialize a worker process."
-    global __is_worker, __is_mp_worker
+    global __is_worker, __is_mp_worker, child_persist_context
+    child_persist_context = context
     __is_worker = True
     __is_mp_worker = multi
     faulthandler.enable()

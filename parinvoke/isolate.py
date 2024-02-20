@@ -14,7 +14,7 @@ from typing import Any, Callable, ParamSpec, TypeVar
 import seedbank
 from numpy.random import SeedSequence
 
-from parinvoke._worker import initialize_worker
+from parinvoke.context import Context
 from parinvoke.logging import log_queue
 
 T = TypeVar("T")
@@ -26,11 +26,12 @@ def _sp_worker(
     log_queue: mp.Queue[logging.LogRecord],
     seed: SeedSequence,
     res_queue: mp.Queue[tuple[bool, Any | Exception]],
+    context: Context,
     func_pkl: bytes,
     args: list[Any],
     kwargs: dict[str, Any],
 ):
-    initialize_worker(log_queue, seed)
+    # initialize_worker(log_queue, seed, context=context)
     _log.debug("unpickling worker function")
     func = pickle.loads(func_pkl)
     _log.debug("running %s in worker", func)
@@ -43,20 +44,20 @@ def _sp_worker(
         res_queue.put((False, e))
 
 
-def run_sp(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+def run_sp(context: Context, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
     """
     Run a function in a subprocess and return its value.  This is for achieving subprocess
     isolation, not parallelism.  The subprocess is configured so things like logging work
     correctly, and is initialized with a derived random seed.
     """
-    ctx = mp.get_context("spawn")
-    rq = ctx.SimpleQueue()
+    mp_ctx = mp.get_context("spawn")
+    rq = mp_ctx.SimpleQueue()
     seed = seedbank.derive_seed()
     # we pre-pickle the function to defer imports
     func_pkl = pickle.dumps(func, pickle.HIGHEST_PROTOCOL)
-    worker_args = (log_queue(ctx), seed, rq, func_pkl, args, kwargs)
+    worker_args = (log_queue(mp_ctx), seed, rq, context, func_pkl, args, kwargs)
     _log.debug("spawning subprocess to run %s", func)
-    proc = ctx.Process(target=_sp_worker, args=worker_args)
+    proc = mp_ctx.Process(target=_sp_worker, args=worker_args)
     proc.start()
     _log.debug("waiting for process %s to return", proc)
     success, payload = rq.get()

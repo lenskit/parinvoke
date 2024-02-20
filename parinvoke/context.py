@@ -7,13 +7,14 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from inspect import Traceback
+from threading import local
 from typing import Callable, Concatenate, ParamSpec, TypeVar
 
 from parinvoke.config import ParallelConfig
 from parinvoke.invoker import ModelOpInvoker
-from parinvoke.sharing import PersistedModel
 
 _log = logging.getLogger()
+_current_context = local()
 T = TypeVar("T")
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -58,6 +59,19 @@ class Context(ABC):
 
         return BPKContext(dir, config)
 
+    @staticmethod
+    def current() -> Context:
+        from ._worker import child_persist_context, is_worker
+
+        if is_worker():
+            if not child_persist_context:
+                raise RuntimeError("child persistence context unavailable")
+            return child_persist_context
+        elif hasattr(_current_context, "context"):
+            return _current_context.context
+        else:
+            raise RuntimeError("no active persistence context")
+
     @abstractmethod
     def persist(self, model: T) -> PersistedModel[T]:
         """
@@ -96,11 +110,15 @@ class Context(ABC):
         pass
 
     def __enter__(self):
+        _current_context.context = self
         self.setup()
         return self
 
     def __exit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Traceback | None):
-        self.teardown()
+        try:
+            self.teardown()
+        finally:
+            del _current_context.context
 
     def invoker(
         self,
@@ -139,4 +157,9 @@ class Context(ABC):
         configured so things like logging work correctly, and is initialized
         with a derived random seed.
         """
-        raise NotImplementedError()
+        from parinvoke.isolate import run_sp
+
+        return run_sp(self, func, *args, **kwargs)
+
+
+from parinvoke.sharing import PersistedModel  # noqa: E402
