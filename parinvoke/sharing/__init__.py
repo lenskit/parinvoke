@@ -18,7 +18,7 @@ from typing import Callable, Generic, Literal, TypeVar
 
 _log = logging.getLogger(__name__)
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 
 
 class PersistedModel(ABC, Generic[T]):
