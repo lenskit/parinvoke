@@ -11,10 +11,9 @@ Sharing persistence for parallel processing models.
 from __future__ import annotations
 
 import logging
-import os
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, Literal, TypeVar
+from typing import Generic, Literal, TypeVar
 
 _log = logging.getLogger(__name__)
 
@@ -70,55 +69,3 @@ class PersistedModel(ABC, Generic[T]):
         else:
             self.is_owner = "transfer"
         return self
-
-
-def persist(
-    model: T, *, method: str | Callable[[T], PersistedModel[T]] | None = None
-) -> PersistedModel[T]:
-    """
-    Persist a model for cross-process sharing.
-
-    This will return a persisted model that can be used to reconstruct the model
-    in a worker process (using :meth:`PersistedModel.get`).
-
-    If no method is provided, this function automatically selects a model persistence
-    strategy from the the following, in order:
-
-    1. If `LK_TEMP_DIR` is set, use :mod:`binpickle` in shareable mode to save
-       the object into the LensKit temporary directory.
-    2. If :mod:`multiprocessing.shared_memory` is available, use :mod:`pickle`
-       to save the model, placing the buffers into shared memory blocks.
-    3. Otherwise, use :mod:`binpickle` in shareable mode to save the object
-       into the system temporary directory.
-
-    Args:
-        model(obj):
-            The model to persist.
-        method(str or None):
-            The method to use.  Can be one of ``binpickle`` or ``shm``.
-
-    Returns:
-        PersistedModel: The persisted object.
-    """
-    persist: Callable[[T], PersistedModel[T]] | None = None
-    if method is not None:
-        if method == "binpickle":
-            persist = persist_binpickle
-        elif method == "shm":
-            persist = persist_shm
-        elif isinstance(method, Callable):
-            persist = method
-        else:
-            raise ValueError("invalid method %s: must be one of binpickle, shm, or a function")
-
-    if persist is None:
-        if SHM_AVAILABLE and "LK_TEMP_DIR" not in os.environ:
-            persist = persist_shm
-        else:
-            persist = persist_binpickle
-
-    return persist(model)
-
-
-from .binpickle import BPKContext, persist_binpickle  # noqa: E402,F401
-from .shm import SHM_AVAILABLE, SHMContext, persist_shm  # noqa: E402,F401

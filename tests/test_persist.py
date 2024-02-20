@@ -7,9 +7,7 @@
 from __future__ import annotations
 
 import io
-import os
 import pickle
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -17,15 +15,13 @@ from numpy.typing import NDArray
 
 from pytest import fixture, skip
 
-from parinvoke import sharing
 from parinvoke.sharing.binpickle import BPKContext
-from parinvoke.sharing.shm import SharedPickler, SHMContext
-from parinvoke.util import set_env_var
+from parinvoke.sharing.shm import SHM_AVAILABLE, SharedPickler, SHMContext
 
 
 @fixture
 def shm_context():
-    if not sharing.SHM_AVAILABLE:
+    if not SHM_AVAILABLE:
         skip("shared memory not available")
 
     with SHMContext() as shm:
@@ -100,22 +96,6 @@ def test_persist_bpk(bpk_context: BPKContext):
 def test_persist_shm(shm_context: SHMContext):
     matrix = np.random.randn(1000, 100)
     share = shm_context.persist(matrix)
-    try:
-        m2 = share.get()
-        assert m2 is not matrix
-        assert np.all(m2 == matrix)
-        del m2
-    finally:
-        share.close()
-
-
-def test_persist_dir(tmp_path: Path):
-    "Test persistence with a configured directory"
-    matrix = np.random.randn(1000, 100)
-    with set_env_var("LK_TEMP_DIR", os.fspath(tmp_path)):
-        share = sharing.persist(matrix)
-        assert isinstance(share, sharing.binpickle.BPKPersisted)
-
     try:
         m2 = share.get()
         assert m2 is not matrix
