@@ -4,6 +4,7 @@ Parallel processing contexts.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from inspect import Traceback
 from typing import Callable, Concatenate, ParamSpec, TypeVar
@@ -12,6 +13,7 @@ from parinvoke.config import ParallelConfig
 from parinvoke.invoker import ModelOpInvoker
 from parinvoke.sharing import PersistedModel
 
+_log = logging.getLogger()
 T = TypeVar("T")
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -33,6 +35,28 @@ class Context(ABC):
     def __init__(self, config: ParallelConfig) -> None:
         super().__init__()
         self.config = config
+
+    @staticmethod
+    def default(config: ParallelConfig | None) -> Context:
+        from parinvoke.sharing.shm import SHM_AVAILABLE, SHMContext
+
+        if config is None:
+            config = ParallelConfig.default()
+
+        var = config.env_var("TEMP_DIR")
+
+        if var is None and SHM_AVAILABLE:
+            return SHMContext(config)
+
+        if var:
+            vn, dir = var
+            _log.debug("found env var %s, creating binpickle context", vn)
+        else:
+            dir = None
+
+        from parinvoke.sharing.binpickle import BPKContext
+
+        return BPKContext(dir, config)
 
     @abstractmethod
     def persist(self, model: T) -> PersistedModel[T]:
