@@ -43,7 +43,7 @@ jobs:
         pip install -e '.[test]'
 
     - name: Run tests
-      run: python -m pytest --cov=parinoke --cov-report=xml tests
+      run: python -m pytest --cov=parinvoke --cov-report=xml tests
 
     - name: Save test results
       uses: lenskit/lkbuild/actions/save-test-results@main
