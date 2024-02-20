@@ -8,7 +8,7 @@ import seedbank
 
 from parinvoke._worker import initialize_mp_worker, mp_invoke_worker
 from parinvoke.config import ParallelConfig
-from parinvoke.invoker import ModelOpInvoker, R, T
+from parinvoke.invoker import ModelOpInvoker, P, R, T
 from parinvoke.logging import log_queue
 from parinvoke.sharing import PersistedModel, persist
 
@@ -21,7 +21,7 @@ class ProcessPoolOpInvoker(ModelOpInvoker[T, R]):
     def __init__(
         self,
         model: T,
-        func: Callable[Concatenate[T, ...], R],
+        func: Callable[Concatenate[T, P], R],
         n_jobs: int,
         persist_method: str | None,
         config: ParallelConfig,

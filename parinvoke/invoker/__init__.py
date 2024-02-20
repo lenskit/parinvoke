@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Concatenate, Generic, Iterator, TypeVar
+from typing import Any, Callable, Concatenate, Generic, Iterator, ParamSpec, TypeVar
 
 from parinvoke.config import ParallelConfig
 
 T = TypeVar("T")
 R = TypeVar("R")
+P = ParamSpec("P")
 
 
 class ModelOpInvoker(ABC, Generic[T, R]):
@@ -43,7 +44,7 @@ class ModelOpInvoker(ABC, Generic[T, R]):
 
 def invoker(
     model: T,
-    func: Callable[Concatenate[T, ...], R],
+    func: Callable[Concatenate[T, P], R],
     n_jobs: int | None = None,
     *,
     persist_method: str | None = None,
